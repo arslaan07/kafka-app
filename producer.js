@@ -1,5 +1,10 @@
 const { Kafka } = require('kafkajs')
+const readline = require('readline')
 
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+})
 
 const kafka = new Kafka({
     clientId: 'my-app',
@@ -12,18 +17,24 @@ const kafka = new Kafka({
     await producer.connect()
     console.log('Producer connected successfully')
 
-    console.log('Producing data...')
-    await producer.send({
-        topic: 'rider-updates',
-        messages: [
-            { partition: 0, key: "location-update", value: JSON.stringify({ name: 'Tony Stark', loc: 'SOUTH' }) }
-        ]
-    })
-    console.log('Data produced successfully')
+    rl.setPrompt('> ')
+    rl.prompt()
 
-    console.log('Disconnecting producer...')
-    await producer.disconnect()
-    console.log('Producer disconnected successfully')
+    rl.on('line', async function(line) {
+        const [riderName, location] = line.split(' ')
+        console.log('Producing data...')
+        await producer.send({
+            topic: 'rider-updates',
+            messages: [
+                { partition: location.toLowerCase() === 'north' ? 0 : 1, key: "location-update", value: JSON.stringify({ name: riderName, loc: location }) }
+            ]
+        })
+        console.log('Data produced successfully')
+    }).on('close', async () => {
+        console.log('Disconnecting producer...')
+        await producer.disconnect()
+        console.log('Producer disconnected successfully')
+    })
   }
 
   init()

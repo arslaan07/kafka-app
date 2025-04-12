@@ -1,5 +1,5 @@
 const { Kafka } = require('kafkajs')
-
+const group = process.argv[2]
 
 const kafka = new Kafka({
     clientId: 'my-app',
@@ -7,7 +7,7 @@ const kafka = new Kafka({
   }) 
 
   async function init() {
-    const consumer = kafka.consumer({ groupId: 'user-1' })
+    const consumer = kafka.consumer({ groupId: group })
     console.log('Consumer connecting...')
 
     await consumer.connect()
@@ -23,7 +23,8 @@ const kafka = new Kafka({
     await consumer.run({
         eachMessage: async ({ topic, partition, message, heartbeat, pause }) => {
             console.log(
-                `[${topic}]: PART: ${partition}:`, message.toString()
+                `[${group}: ${topic}]: PART: ${partition}:`, 
+                message.value.toString() // Parse the actual message value
             )
         },
     })
